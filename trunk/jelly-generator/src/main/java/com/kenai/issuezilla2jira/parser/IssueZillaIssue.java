@@ -1,3 +1,20 @@
+/**
+ *
+ * Copyright 2009 Andrew Bayer
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package com.kenai.issuezilla2jira.parser;
 
 import java.util.ArrayList;
@@ -57,8 +74,8 @@ public class IssueZillaIssue {
      *
      * @return All activities for this issue.
      */
-    public Collection<Activity> getActivities() {
-        return Collections.unmodifiableCollection(activities);
+    public List<Activity> getActivities() {
+        return Collections.unmodifiableList(activities);
     }
 
     /**
@@ -75,8 +92,8 @@ public class IssueZillaIssue {
      *
      * @return All hasDuplicates for this issue.
      */
-    public Collection<HasDuplicate> getHasDuplicates() {
-        return Collections.unmodifiableCollection(hasDuplicates);
+    public List<HasDuplicate> getHasDuplicates() {
+        return Collections.unmodifiableList(hasDuplicates);
     }
 
     /**
@@ -93,8 +110,8 @@ public class IssueZillaIssue {
      *
      * @return All isDuplicates for this issue.
      */
-    public Collection<IsDuplicate> getIsDuplicates() {
-        return Collections.unmodifiableCollection(isDuplicates);
+    public List<IsDuplicate> getIsDuplicates() {
+        return Collections.unmodifiableList(isDuplicates);
     }
 
     /**
@@ -111,8 +128,8 @@ public class IssueZillaIssue {
      *
      * @return All blockings for this issue.
      */
-    public Collection<Blocking> getBlockings() {
-        return Collections.unmodifiableCollection(blockings);
+    public List<Blocking> getBlockings() {
+        return Collections.unmodifiableList(blockings);
     }
 
     /**
@@ -129,8 +146,8 @@ public class IssueZillaIssue {
      *
      * @return All dependsOns for this issue.
      */
-    public Collection<DependsOn> getDependsOns() {
-        return Collections.unmodifiableCollection(dependsOns);
+    public List<DependsOn> getDependsOns() {
+        return Collections.unmodifiableList(dependsOns);
     }
 
     /**
@@ -147,8 +164,8 @@ public class IssueZillaIssue {
      *
      * @return All attachments for this issue.
      */
-    public Collection<Attachment> getAttachments() {
-        return Collections.unmodifiableCollection(attachments);
+    public List<Attachment> getAttachments() {
+        return Collections.unmodifiableList(attachments);
     }
 
     /**
@@ -165,8 +182,8 @@ public class IssueZillaIssue {
      *
      * @return All comments for this issue.
      */
-    public Collection<Comment> getComments() {
-        return Collections.unmodifiableCollection(comments);
+    public List<Comment> getComments() {
+        return Collections.unmodifiableList(comments);
     }
 
     /**
