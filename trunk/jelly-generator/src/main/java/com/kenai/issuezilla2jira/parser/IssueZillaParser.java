@@ -113,7 +113,7 @@ public class IssueZillaParser {
             digester.addObjectCreate("issue/attachment", Attachment.class);
             digester.addBeanPropertySetter("issue/attachment/encoding");
             digester.addBeanPropertySetter("issue/attachment/mimetype", "mimeType");
-            digester.addBeanPropertySetter("issue/attachment/attach_id", "attachId");
+            digester.addBeanPropertySetter("issue/attachment/attachid", "attachId");
             digester.addBeanPropertySetter("issue/attachment/date");
             digester.addBeanPropertySetter("issue/attachment/desc");
             digester.addBeanPropertySetter("issue/attachment/ispatch", "isPatch");
