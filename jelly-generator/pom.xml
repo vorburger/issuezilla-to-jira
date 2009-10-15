@@ -19,8 +19,8 @@
 
   <licenses>
     <license>
-      <name>MIT license</name>
-      <comments>All source code is under the MIT license.</comments>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url> 
     </license>
   </licenses>
   
@@ -40,6 +40,16 @@
       <groupId>commons-digester</groupId>
       <artifactId>commons-digester</artifactId>
       <version>1.7</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>1.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.swizzle</groupId>
+      <artifactId>swizzle-jirareport</artifactId>
+      <version>1.2.2</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -66,7 +76,7 @@
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
-              <mainClass>com.kenai.issuezilla2jira.parser.IssueZillaParser</mainClass>
+              <mainClass>com.kenai.issuezilla2jira.Main</mainClass>
             </manifest>
           </archive>
         </configuration>
@@ -86,7 +96,7 @@
               </descriptorRefs>
               <archive>
                 <manifest>
-                  <mainClass>com.kenai.issuezilla2jira.parser.IssueZillaParser</mainClass>
+                  <mainClass>com.kenai.issuezilla2jira.Main</mainClass>
                 </manifest>
               </archive>
             </configuration>
