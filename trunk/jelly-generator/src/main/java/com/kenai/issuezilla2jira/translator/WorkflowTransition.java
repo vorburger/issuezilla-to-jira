@@ -25,7 +25,7 @@ package com.kenai.issuezilla2jira.translator;
  */
 public class WorkflowTransition {
     private String workflowName;
-    private String resolution;
+    private String resolution = "";
     private String user;
     private String assignee;
 

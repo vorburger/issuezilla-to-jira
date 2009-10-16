@@ -151,7 +151,8 @@ public class Attachment {
      * @return the value of filename
      */
     public String getFilename() {
-        return this.filename;
+        String tempFn = this.filename.replaceAll("&", "_");
+        return tempFn;
     }
 
     /**
