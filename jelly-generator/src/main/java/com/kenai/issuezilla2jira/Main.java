@@ -39,7 +39,9 @@ import com.kenai.issuezilla2jira.parser.*;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
@@ -48,6 +50,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @version $Revision$ $Date$
@@ -73,8 +76,20 @@ public class Main {
 
         String templateName = "jira-jelly.vm";
 
+        String mainOutput = System.getProperty("output");
+        String projOutput = System.getProperty("projOutput");
+        PrintStream mainOut = null;
+        PrintStream projOut = null;
         try {
-            generate(templateName, System.out, originDir);
+            mainOut = new PrintStream(new FileOutputStream(new File(mainOutput)));
+            projOut = new PrintStream(new FileOutputStream(new File(projOutput)));
+            
+        } catch (IOException e) {
+            throw e;
+        }
+
+        try {
+            generate(templateName, mainOut, projOut, originDir);
         } catch (InvocationTargetException e) {
             throw e.getCause();
         } catch (MethodInvocationException e) {
@@ -122,17 +137,18 @@ public class Main {
         return jiraIssues;
     }
     
-    public static void generate(String templateName, PrintStream result, String originDir) throws Exception {
+    public static void generate(String templateName, PrintStream result,
+                                PrintStream projResult, String originDir) throws Exception {
         VelocityContext context = new VelocityContext();
-        generate(context, templateName, result, originDir);
+        generate(context, templateName, result, projResult, originDir);
     }
 
     public static void generate(VelocityContext context, String templateName, PrintStream result,
-                                String originDir) throws Exception {
+                                PrintStream projResult, String originDir) throws Exception {
         File[] xmlFiles = new File(originDir).listFiles((FileFilter)new WildcardFileFilter("*.xml"));
         String projectKey = System.getProperty("projectKey");
         
-        List<JiraIssue> issues = new ArrayList<JiraIssue>();
+        TreeMap<Integer,JiraIssue> issuesMap = new TreeMap<Integer,JiraIssue>();
         List<String> components = new ArrayList<String>();
         List<String> users = new ArrayList<String>();
         List<String> versions = new ArrayList<String>();
@@ -142,7 +158,7 @@ public class Main {
             IssueZillaIssue origIssue = parser.parse(xmlFile);
             if (origIssue!=null) {
                 JiraIssue jiraIssue = new JiraIssue(origIssue, projectKey);
-                issues.add(jiraIssue);
+                issuesMap.put(new Integer(jiraIssue.getIssueId()),jiraIssue);
                 if (!components.contains(origIssue.getSubComponent())) {
                     components.add(origIssue.getSubComponent());
                 }
@@ -150,7 +166,7 @@ public class Main {
                     versions.add(origIssue.getVersion());
                 }
                 for (String user : jiraIssue.getUsersForIssue()) {
-                    if (!users.contains(user)) {
+                    if (!users.contains(user) && (!user.equals("-1"))) {
                         users.add(user);
                     }
                 }
@@ -170,6 +186,11 @@ public class Main {
                 context.put(name, value);
             }
         }
+        List<JiraIssue> issues = new ArrayList<JiraIssue>();
+        for (Map.Entry<Integer,JiraIssue> e : issuesMap.entrySet()) {
+            issues.add(e.getValue());
+        }
+        
         context.put("versions", versions);
         context.put("components", components);
         context.put("users", users);
@@ -190,6 +211,10 @@ public class Main {
         PrintWriter writer = new PrintWriter(result);
         template.merge(context, writer);
         writer.flush();
+        Template projTemp = velocity.getTemplate("jira-create-project.vm");
+        PrintWriter projWriter = new PrintWriter(projResult);
+        projTemp.merge(context, projWriter);
+        projWriter.flush();
     }
 
     public static class UtilsUtil {

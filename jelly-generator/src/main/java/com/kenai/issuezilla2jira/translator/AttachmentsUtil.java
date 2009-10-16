@@ -48,8 +48,10 @@ public class AttachmentsUtil {
         idDir.mkdir();
         File file = new File(idDir, attachment.getFilename());
 
-
-        if (!attachment.getData().equals("")) {
+        if (System.getProperty("skipDownload").equals("true")) {
+            return file;
+        }
+        else if (!attachment.getData().equals("")) {
             Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
             
             try {
@@ -86,6 +88,9 @@ public class AttachmentsUtil {
     private File getOrCreateAttachmentsDir(String prefix) throws IOException {
         if (attachmentsDir != null) {
             return attachmentsDir;
+        }
+        if (System.getProperty("attachDir") != null) {
+            return new File(System.getProperty("attachDir"));
         }
         File tempFile = File.createTempFile("foo", "bar");
         File tmpDir = tempFile.getParentFile();

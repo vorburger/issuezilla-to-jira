@@ -96,7 +96,7 @@ public class JiraIssue {
             jiraRes = "Won't Fix";
         }
         else if (origRes.equals("WORKSFORME")) {
-            jiraRes = "Can't Reproduce";
+            jiraRes = "Cannot Reproduce";
         }
         else if (origRes.equals("INVALID")) {
             jiraRes = "Incomplete";
@@ -277,58 +277,58 @@ public class JiraIssue {
             
             if (statusChange.getOldValue().equals("NEW")) {
                 if (statusChange.getNewValue().equals("STARTED")) {
-                    wft.setWorkflowName("Start Progress");
+                    wft.setWorkflowName("4");
                 }
                 else if (statusChange.getNewValue().equals("RESOLVED")) {
-                    wft.setWorkflowName("Resolve Issue");
+                    wft.setWorkflowName("5");
                     wft.setResolution(getResForStatusChange(e.getKey(), resolutions));
                 }
             }
             else if (statusChange.getOldValue().equals("STARTED")) {
                 if (statusChange.getNewValue().equals("NEW")) {
-                    wft.setWorkflowName("Stop Progress");
+                    wft.setWorkflowName("301");
                 }
                 else if (statusChange.getNewValue().equals("RESOLVED")) {
-                    wft.setWorkflowName("Resolve Issue");
+                    wft.setWorkflowName("5");
                     wft.setResolution(getResForStatusChange(e.getKey(), resolutions));
                 }
             }
             else if (statusChange.getOldValue().equals("RESOLVED")) {
                 if (statusChange.getNewValue().equals("REOPENED")) {
-                    wft.setWorkflowName("Reopen Issue");
+                    wft.setWorkflowName("3");
                     wft.setResolution(getResForStatusChange(e.getKey(), resolutions));
                 }
                 else if (statusChange.getNewValue().equals("CLOSED")) {
-                    wft.setWorkflowName("Close Issue");
+                    wft.setWorkflowName("701");
                 }
                 else if (statusChange.getNewValue().equals("VERIFIED")) {
-                    wft.setWorkflowName("Verify Issue");
+                    wft.setWorkflowName("741");
                 }
             }
             else if (statusChange.getOldValue().equals("REOPENED")) {
                 if (statusChange.getNewValue().equals("RESOLVED")) {
-                    wft.setWorkflowName("Resolve Issue");
+                    wft.setWorkflowName("5");
                     wft.setResolution(getResForStatusChange(e.getKey(), resolutions));
                 }
                 else if (statusChange.getNewValue().equals("NEW")) {
-                    wft.setWorkflowName("Stop Progress");
+                    wft.setWorkflowName("711");
                 }
                 else if (statusChange.getNewValue().equals("STARTED")) {
-                    wft.setWorkflowName("Start Progress");
+                    wft.setWorkflowName("4");
                 }
             }
             else if (statusChange.getOldValue().equals("VERIFIED")) {
                 if (statusChange.getNewValue().equals("CLOSED")) {
-                    wft.setWorkflowName("Close Issue");
+                    wft.setWorkflowName("721");
                 }
                 else if (statusChange.getNewValue().equals("REOPENED")) {
-                    wft.setWorkflowName("Reopen Issue");
+                    wft.setWorkflowName("731");
                     wft.setResolution(getResForStatusChange(e.getKey(), resolutions));
                 }
             }
             else if (statusChange.getOldValue().equals("CLOSED")) {
                 if (statusChange.getNewValue().equals("REOPENED")) {
-                    wft.setWorkflowName("Reopen Issue");
+                    wft.setWorkflowName("3");
                     wft.setResolution(getResForStatusChange(e.getKey(), resolutions));
                 }
             }
@@ -409,10 +409,32 @@ public class JiraIssue {
     
     private String getResForStatusChange(Date statusDate, Map resolutions) {
         String res = "";
-
+        
         if (resolutions.containsKey(statusDate)) {
             Activity resAct = (Activity) resolutions.get(statusDate);
-            res = resAct.getNewValue();
+            String origRes = resAct.getNewValue();
+            
+            if (origRes.equals("FIXED")) {
+                res = "Fixed";
+            }
+            else if (origRes.equals("DUPLICATE")) {
+                res = "Duplicate";
+            }
+            else if (origRes.equals("WONTFIX")) {
+                res = "Won't Fix";
+            }
+            else if (origRes.equals("WORKSFORME")) {
+                res = "Cannot Reproduce";
+            }
+            else if (origRes.equals("INVALID")) {
+                res = "Incomplete";
+            }
+            else if (origRes.equals("LATER")) {
+                res = "Postponed";
+            }
+            else if (origRes.equals("REMIND")) {
+                res = "Postponed";
+            }
         }
 
         return res;
