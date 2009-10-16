@@ -50,8 +50,8 @@ public class IssueZillaIssue {
     private String os;
     private String summary;
     private String keywords;
-    private String cc;
 
+    private final List<String> ccs = new ArrayList<String>();
     private final List<Comment> comments = new ArrayList<Comment>();
     private final List<Activity> activities = new ArrayList<Activity>();
     private final List<HasDuplicate> hasDuplicates = new ArrayList<HasDuplicate>();
@@ -569,8 +569,8 @@ public class IssueZillaIssue {
      *
      * @return the value of cc
      */
-    public String getCc() {
-        return this.cc;
+    public List<String> getCcs() {
+        return Collections.unmodifiableList(ccs);
     }
 
     /**
@@ -578,8 +578,8 @@ public class IssueZillaIssue {
      *
      * @param argCc Value to assign to this.cc
      */
-    public void setCc(String argCc) {
-        this.cc = argCc;
+    public void addCc(String argCc) {
+        ccs.add(argCc);
     }
 
     public String toString() {
@@ -605,8 +605,12 @@ public class IssueZillaIssue {
         buf.append("OS: " + os + "\n");
         buf.append("Summary: " + summary + "\n");
         buf.append("Keywords: " + keywords + "\n");
-        buf.append("CC: " + cc + "\n");
 
+        buf.append("-- CC --\n");
+        for (String cc : ccs) {
+            buf.append("\t" + cc.toString());
+        }
+        
         buf.append("-- Comments --\n");
         for (Comment comment : comments) {
             buf.append(comment.toString());

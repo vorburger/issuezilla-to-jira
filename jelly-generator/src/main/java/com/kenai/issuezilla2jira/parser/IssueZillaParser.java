@@ -69,7 +69,8 @@ public class IssueZillaParser {
             digester.addBeanPropertySetter("issue/op_sys", "os");
             digester.addBeanPropertySetter("issue/short_desc", "summary");
             digester.addBeanPropertySetter("issue/keywords", "keywords");
-            digester.addBeanPropertySetter("issue/cc", "cc");
+            digester.addCallMethod("issue/cc", "addCc", 1);
+            digester.addCallParam("issue/cc", 0);
             
             digester.addObjectCreate("issue/long_desc", Comment.class);
             digester.addBeanPropertySetter("issue/long_desc/who", "commenter");

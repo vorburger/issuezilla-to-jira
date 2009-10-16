@@ -96,6 +96,10 @@
     <jira:AddCustomFieldValue id="customfield_10000"
                               value="$xml.escape($issue.issueRefUrl)" />
 #end
+#foreach( $watcher in $issue.watchers )
+    <jira:AddCustomFieldValue id="customfield_10010"
+                              value="$xml.escape($watcher)" />
+#end
 </jira:CreateIssue>
 
 #end
