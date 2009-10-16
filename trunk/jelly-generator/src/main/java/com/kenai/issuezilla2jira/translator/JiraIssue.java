@@ -215,6 +215,10 @@ public class JiraIssue {
         return originalIssue.getSummary();
     }
 
+    public List<String> getWatchers() {
+        return originalIssue.getCcs();
+    }
+    
     public String getDescription() {
         List<Comment> comments = originalIssue.getComments();
         if (comments.size() > 0) {
