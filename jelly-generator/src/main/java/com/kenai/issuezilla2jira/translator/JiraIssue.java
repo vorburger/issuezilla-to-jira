@@ -166,7 +166,7 @@ public class JiraIssue {
         return originalIssue.getIssueId();
     }
 
-    public String getComponent() {
+    public String getComponents() {
         return originalIssue.getSubComponent();
     }
 
@@ -191,7 +191,12 @@ public class JiraIssue {
     }
 
     public String getAssignedTo() {
-        return originalIssue.getAssignedTo();
+        if (!originalIssue.getAssignedTo().equals("issues@hudson")) {
+            return originalIssue.getAssignedTo();
+        }
+        else {
+            return "-1";
+        }
     }
 
     public String getReporter() {
@@ -371,6 +376,35 @@ public class JiraIssue {
         }
 
         return depends;
+    }
+
+    public List<String> getUsersForIssue() {
+        List<String> users = new ArrayList<String>();
+
+        users.add(getAssignedTo());
+        if (!users.contains(getReporter())) {
+            users.add(getReporter());
+        }
+
+        for (Comment c : getComments()) {
+            if (!users.contains(c.getCommenter())) {
+                users.add(c.getCommenter());
+            }
+        }
+
+        for (WorkflowTransition w : getWorkflowTransitions()) {
+            if (!users.contains(w.getUser())) {
+                users.add(w.getUser());
+            }
+        }
+
+        for (Attachment a : getAttachments()) {
+            if (!users.contains(a.getSubmitterName())) {
+                users.add(a.getSubmitterName());
+            }
+        }
+
+        return users;
     }
     
     private String getResForStatusChange(Date statusDate, Map resolutions) {

@@ -20,9 +20,11 @@
 #############################################################################
 
 #set( $void = $params.required( "projectKey" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "projectName" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "projectLead" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
 #set( $void = $params.validate() )
 ##
-#set( $xml = $utils.load("org.codehaus.swizzle.jirareport.XmlUtil") )
+#set( $xml = $utils.load("com.kenai.issuezilla2jira.translator.XmlUtil") )
 #set( $att = $utils.load("com.kenai.issuezilla2jira.translator.AttachmentsUtil") )
 #set( $j = $utils.load("com.kenai.issuezilla2jira.translator.JellyUtil") )
 ##
@@ -34,17 +36,54 @@
 
 
 <JiraJelly xmlns:jira="jelly:com.atlassian.jira.jelly.enterprise.JiraTagLib" xmlns:sql="jelly:sql" xmlns:j="jelly:core">
+#set( $d = "$" )
+<j:set var="dollar" value="$" />
+#foreach( $component in $components )
+  <jira:AddComponent project-key="$projectKey"
+                     name="$component" />
+#end
+#foreach( $version in $versions )
+  <jira:AddVersion project-key="$projectKey"
+                   name="$version" />
+#end
+
+#foreach( $user in $users )
+  <jira:CreateUser username="$user"
+                   password="$user"
+                   confirm="$user"
+                   fullname="$user"
+                   email="andrew.bayer+jiraspam@gmail.com" />
+#end
+
+
+  <jira:CreateGroup group-name="${lowkey}-contributors"/>
+  <jira:CreateGroup group-name="${lowkey}-developers">
+    <jira:AddUserToGroup username="${jiraAdmin}"/>
+#foreach( $user in $users )
+    <jira:AddUserToGroup username="$user"/>
+#end
+  </jira:CreateGroup>
+
+  <jira:CreateProject key="$projectKey" name="$projectName" lead="$projectLead">
+
+    <jira:CreatePermissionScheme name="$project.name permissions">
+      <jira:AddPermission type="reporter" permissions="Close"/>
+      <jira:AddPermission group="jira-administrators" permissions="ModifyReporter,Browse,Project,Close,Delete" type="group"/>
+      <jira:AddPermission group="jira-users" permissions="Browse,Create,Comment,Attach,ViewVersionControl" type="group"/>
+      <jira:AddPermission group="${lowkey}-developers" permissions="Browse,Project,Edit,Link,ScheduleIssue,Move,Assign,Assignable,Resolve,Close,Work" type="group"/>
+      <jira:AddPermission group="${lowkey}-contributors" permissions="Assignable" type="group"/>
+      <jira:AddPermission group="Anyone" permissions="Browse,ViewVersionControl"/>
+      <jira:SelectProjectScheme/>
+    </jira:CreatePermissionScheme>
+  </jira:CreateProject>
 
 #foreach( $issue in $issues )
-#if( $issue.type.id == 7 )
-#set( $issue.type = $jira.getIssueType("Task") )
-#end
   <jira:CreateIssue project-key="$projectKey"
     issueType="$xml.escape($issue.issueType)"
     summary="$xml.escape($issue.summary)"
     priority="$xml.escape($issue.priority)"
     components="$xml.escape($issue.components)"
-    versions="$xml.escape($issue.version))"
+    versions="$xml.escape($issue.version)"
     assignee="$xml.escape($issue.assignedTo)"
     reporter="$xml.escape($issue.reporter)"
     environment="$xml.escape($issue.environment)"
@@ -56,7 +95,6 @@
 
 #end
 
-#set( $d = "$" )
 #foreach( $issue in $issues )
 #foreach( $transition in $issue.workflowTransitions )
 #if( $transition.resolution != "" )                                
@@ -92,11 +130,10 @@
 
   <issues>
 #foreach( $issue in $issues )
-#set( $issue = $jira.getIssue( $issue.key ) )
   <sql:query var="results" dataSource="${d}{db}">
       select id from jiraissue where pkey = '${d}{$j.keyRef($issue)}'
   </sql:query>
-  <j:set var="$j.idRef($issue)" value="${d}{results.rows[0].ID}"/>
+  <j:set var="$j.idRef($issue)" value="${d}{results.rows[0].id}"/>
     <issue src-key="$issue.key" src-id="$issue.issueId" dest-key="${d}{$j.keyRef($issue)}" dest-id="${d}{$j.idRef($issue)}" />
 #end
   </issues>
@@ -111,13 +148,13 @@
 #set( $file = $att.saveAttachment($attachment))
   <jira:AttachFile key="${d}{$j.keyRef($issue)}" filepath="$file.getAbsolutePath()" option="add"/>
   <sql:query var="results" dataSource="${d}{db}">
-      select max(id) max from fileattachment where issueid = ${d}{$j.idRef($issue)} and filename = '$attachment.filename'
+      select max(id) as maxId from fileattachment where issueid = ${d}{$j.idRef($issue)} and filename = '$attachment.filename'
   </sql:query>
-  <j:set var="$j.idRef($attachment)" value="${d}{results.rows[0].max}" />
+  <j:set var="$j.idRef($attachment)" value="${d}{results.rows[0].maxId}" />
   <sql:update var="results" dataSource="${d}{db}">
-      update fileattachment set author = '$attachment.submitterId', created = '$date.format($attachment.date)' where id = ${d}{$j.idRef($attachment)}
+      update fileattachment set author = '$attachment.submitterName', created = '$date.format($attachment.date)' where id = ${d}{$j.idRef($attachment)}
   </sql:update>
-    <attachment src-id="$attachment.attachId" dest-id="${d}{$j.idRef($attachment)}" src-user="$attachment.submitterId" dest-user="$attachment.submitterId" file="$attachment.filename" />
+    <attachment src-id="$attachment.attachId" dest-id="${d}{$j.idRef($attachment)}" src-user="$attachment.submitterName" dest-user="$attachment.submitterName" file="$attachment.filename" />
 
 #end
 #end
@@ -135,15 +172,14 @@
 #end
 #foreach( $issue in $issues )
 #foreach( $depends in $issue.dependsOn )
-  <jira:LinkIssue key="${d}{$j.keyRef($duplicate.fromId)}"
-                  linkKey="${d}{$j.keyRef($duplicate.toId)}"
-                  linkDesc="$duplicate.linkDesc" />
+  <jira:LinkIssue key="${d}{$j.keyRef($depends.fromId)}"
+                  linkKey="${d}{$j.keyRef($depends.toId)}"
+                  linkDesc="$depends.linkDesc" />
 #end
 #end
   
 
 #foreach( $issue in $issues )
-#set( $issue = $jira.getIssue( $issue.key ) )
   <sql:update var="results" dataSource="${d}{db}">
       update jiraissue set updated = '$date.format($issue.updatedTime)' where pkey = '${d}{$j.keyRef($issue)}'
   </sql:update>
@@ -153,8 +189,7 @@
   <!-- SQL HACK FOR ISSUE KEY NAMES -->
   <!-- ============================ -->
 
-#foreach( $issue in $issues.descending("id") )
-#set( $issue = $jira.getIssue( $issue.key ) )
+#foreach( $issue in $issues )
   <sql:update var="results" dataSource="${d}{db}">
       update jiraissue set pkey = '$issue.key' where id = '${d}{$j.idRef($issue)}' and pkey = '${d}{$j.keyRef($issue)}'
   </sql:update>

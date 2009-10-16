@@ -74,7 +74,7 @@ public class Main {
         String templateName = "jira-jelly.vm";
 
         try {
-            generate(templateName, System.out, parseIssueXml(originDir));
+            generate(templateName, System.out, originDir);
         } catch (InvocationTargetException e) {
             throw e.getCause();
         } catch (MethodInvocationException e) {
@@ -122,13 +122,42 @@ public class Main {
         return jiraIssues;
     }
     
-    public static void generate(String templateName, PrintStream result, List<JiraIssue> issues) throws Exception {
+    public static void generate(String templateName, PrintStream result, String originDir) throws Exception {
         VelocityContext context = new VelocityContext();
-        generate(context, templateName, result, issues);
+        generate(context, templateName, result, originDir);
     }
 
     public static void generate(VelocityContext context, String templateName, PrintStream result,
-                                List<JiraIssue> issues) throws Exception {
+                                String originDir) throws Exception {
+        File[] xmlFiles = new File(originDir).listFiles((FileFilter)new WildcardFileFilter("*.xml"));
+        String projectKey = System.getProperty("projectKey");
+        
+        List<JiraIssue> issues = new ArrayList<JiraIssue>();
+        List<String> components = new ArrayList<String>();
+        List<String> users = new ArrayList<String>();
+        List<String> versions = new ArrayList<String>();
+        
+        IssueZillaParser parser = new IssueZillaParser();
+        for (File xmlFile : xmlFiles) {
+            IssueZillaIssue origIssue = parser.parse(xmlFile);
+            if (origIssue!=null) {
+                JiraIssue jiraIssue = new JiraIssue(origIssue, projectKey);
+                issues.add(jiraIssue);
+                if (!components.contains(origIssue.getSubComponent())) {
+                    components.add(origIssue.getSubComponent());
+                }
+                if (!versions.contains(origIssue.getVersion())) {
+                    versions.add(origIssue.getVersion());
+                }
+                for (String user : jiraIssue.getUsersForIssue()) {
+                    if (!users.contains(user)) {
+                        users.add(user);
+                    }
+                }
+            }
+        }
+
+        
         List keys = Arrays.asList(context.getKeys());
 
         for (Iterator iterator = System.getProperties().entrySet().iterator(); iterator.hasNext();) {
@@ -141,6 +170,9 @@ public class Main {
                 context.put(name, value);
             }
         }
+        context.put("versions", versions);
+        context.put("components", components);
+        context.put("users", users);
         context.put("issues", issues);
         context.put("arrays", new ArraysUtil());
         context.put("collections", new CollectionsUtil());
