@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+##---------------------------------------------------------------------------
+##
+## Copyright 2006-2009 David Blevins, Andrew Bayer, Michael Vorburger
+##
+##  Licensed under the Apache License, Version 2.0 (the "License");
+##  you may not use this file except in compliance with the License.
+##  You may obtain a copy of the License at
+##
+##     http://www.apache.org/licenses/LICENSE-2.0
+##
+##  Unless required by applicable law or agreed to in writing, software
+##  distributed under the License is distributed on an "AS IS" BASIS,
+##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+##  See the License for the specific language governing permissions and
+##  limitations under the License.
+##
+##---------------------------------------------------------------------------
+#############################################################################
+
+#set( $xml = $utils.load("com.kenai.issuezilla2jira.translator.XmlUtil") )
+#set( $att = $utils.load("com.kenai.issuezilla2jira.translator.AttachmentsUtil") )
+#set( $j = $utils.load("com.kenai.issuezilla2jira.translator.JellyUtil") )
+##
+#set( $void = $date.format("yyyy-MM-dd hh:mm:ss.0") )
+
+#set( $void = $att.setAttachmentsDir($attachmentsDir) )
+
+
+<JiraJelly xmlns:jira="jelly:com.atlassian.jira.jelly.enterprise.JiraTagLib" xmlns:sql="jelly:sql" xmlns:j="jelly:core">
+#set( $d = "$" )
+<j:set var="dollar" value="$" />
+
+  <!-- ============================================== -->
+  <!-- ATTACH FILES AND UPDATE FILEATTACHMENT RECORDS -->
+  <!-- ============================================== -->
+  <attachments>
+  
+#foreach( $issue in $issues )
+#foreach( $attachment in $issue.attachments )
+#set( $file = $att.getLocalFile($attachment))
+
+  <jira:AttachFile key="${d}{$j.keyRef($issue)}" filepath="$file.getAbsolutePath()" option="add"/>
+
+  <sql:query var="results" dataSource="${d}{db}">
+      select max(id) as maxId from fileattachment where issueid = ${d}{$j.idRef($issue)} and filename = '$attachment.filename'
+  </sql:query>
+
+  <j:set var="$j.idRef($attachment)" value="${d}{results.rows[0].maxId}" />
+  <sql:update var="results" dataSource="${d}{db}">
+      update fileattachment set author = '$attachment.submitterName', created = '$date.format($attachment.date)' where id = ${d}{$j.idRef($attachment)}
+  </sql:update>
+  
+  <attachment src-id="$attachment.attachId" dest-id="${d}{$j.idRef($attachment)}" src-user="$attachment.submitterName" dest-user="$attachment.submitterName" file="$attachment.filename" />
+    
+#end
+#end
+   </attachments>
+
+</JiraJelly>

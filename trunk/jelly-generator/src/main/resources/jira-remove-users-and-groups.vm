@@ -41,25 +41,12 @@
 #set( $d = "$" )
 <j:set var="dollar" value="$" />
 
-  <jira:CreateProject key="$projectKey" name="$xml.escape($projectName)" lead="$xml.escape($projectLead)">
-    
-    <jira:CreatePermissionScheme name="$xml.escape($projectName) permissions">
-      <jira:AddPermission type="reporter" permissions="Close"/>
-      <jira:AddPermission group="jira-administrators" permissions="ModifyReporter,Browse,Project,Close,Delete" type="group"/>
-      <jira:AddPermission group="jira-users" permissions="Browse,Create,Comment,Attach,ViewVersionControl" type="group"/>
-      <jira:AddPermission group="${lowkey}-developers" permissions="Browse,Project,Edit,Link,ScheduleIssue,Move,Assign,Assignable,Resolve,Close,Work" type="group"/>
-      <jira:AddPermission group="${lowkey}-contributors" permissions="Assignable" type="group"/>
-      <jira:AddPermission group="Anyone" permissions="Browse,ViewVersionControl"/>
-      <jira:SelectProjectScheme/>
-    </jira:CreatePermissionScheme>
-
-#foreach( $component in $components )
-	  <jira:AddComponent name="$xml.escape($component)" />
+#foreach( $user in $users )
+  <jira:RemoveUser name="$user" />
 #end
 
-#foreach( $version in $versions )
-	  <jira:AddVersion name="$xml.escape($version)" />
-#end
-  </jira:CreateProject>
+  <jira:RemoveGroup name="${lowkey}-contributors"/>
+
+  <jira:RemoveGroup name="${lowkey}-developers" />
 
 </JiraJelly>

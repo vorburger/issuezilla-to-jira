@@ -1,0 +1,45 @@
+<issue status_code="200" status_message="OK">
+  <issue_id>2532</issue_id>
+  <issue_status>STARTED</issue_status>
+  <priority>P3</priority>
+  <resolution/>
+  <component>mifos</component>
+  <version>Gazelle B</version>
+  <rep_platform>All</rep_platform>
+  <assigned_to>vorburger</assigned_to>
+  <delta_ts>20091017034821</delta_ts>
+  <subcomponent>Misc</subcomponent>
+  <reporter>vorburger</reporter>
+  <target_milestone>Gazelle Backlog</target_milestone>
+  <issue_type>FEATURE</issue_type>
+  <creation_ts>2009-10-16 18:56:49</creation_ts>
+  <qa_contact>mifosqa</qa_contact>
+  <status_whiteboard/>
+  <issue_file_loc/>
+  <votes/>
+  <op_sys>All</op_sys>
+  <short_desc>Issuezilla -&gt; JIRA migration</short_desc>
+  <keywords/>
+  <long_desc>
+   <who>vorburger</who>
+   <issue_when>2009-10-16 18:56:49</issue_when>
+   <thetext>This issue is to track progress and dependencies for an (java.net) Issuezilla -&gt;
+(Kenai.com, or other) JIRA migration.
+
+Following Adam Monsen's recommendation, I'm exploring
+http://kenai.com/projects/issuezilla-to-jira/</thetext>
+  </long_desc>
+  <long_desc>
+   <who>vorburger</who>
+   <issue_when>2009-10-17 03:48:21</issue_when>
+   <thetext>https://java-net.dev.java.net/issues/show_bug.cgi?id=709</thetext>
+  </long_desc>
+  <activity>
+    <user>vorburger</user>
+    <when>2009-10-17 03:48:21</when>
+    <field_name>issue_status</field_name>
+    <field_desc>Status</field_desc>
+    <oldvalue>NEW</oldvalue>
+    <newvalue>STARTED</newvalue>
+  </activity>
+</issue>

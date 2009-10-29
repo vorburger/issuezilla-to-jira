@@ -17,19 +17,22 @@
 
 package com.kenai.issuezilla2jira.translator;
 
-import com.kenai.issuezilla2jira.parser.*;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.TreeMap;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.TreeMap;
+
+import com.kenai.issuezilla2jira.parser.Activity;
+import com.kenai.issuezilla2jira.parser.Attachment;
+import com.kenai.issuezilla2jira.parser.Comment;
+import com.kenai.issuezilla2jira.parser.DependsOn;
+import com.kenai.issuezilla2jira.parser.HasDuplicate;
+import com.kenai.issuezilla2jira.parser.IssueZillaIssue;
 
 /**
  * Given an IssueZilla issue, translates it to JIRA form.
@@ -247,7 +250,7 @@ public class JiraIssue {
         List<Activity> allActivities = originalIssue.getActivities();
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
         
-        Map resolutions = new HashMap();
+        Map<Date, Activity> resolutions = new HashMap<Date, Activity>();
         TreeMap<Date,Activity> statusChanges = new TreeMap<Date,Activity>();
         TreeMap<Date,Activity> assignments = new TreeMap<Date,Activity>();
 
@@ -281,62 +284,74 @@ public class JiraIssue {
             
             if (statusChange.getOldValue().equals("NEW")) {
                 if (statusChange.getNewValue().equals("STARTED")) {
-                    wft.setWorkflowName("4");
+                    wft.setWorkflowName("4"); // Start Progress
                 }
                 else if (statusChange.getNewValue().equals("RESOLVED")) {
-                    wft.setWorkflowName("5");
+                    wft.setWorkflowName("5"); // Resolve Issue 
                     wft.setResolution(getResForStatusChange(e.getKey(), resolutions));
+                }
+                else if (statusChange.getNewValue().equals("REOPENED")) {
+                    wft.setWorkflowName("4"); // Start Progress
                 }
             }
             else if (statusChange.getOldValue().equals("STARTED")) {
                 if (statusChange.getNewValue().equals("NEW")) {
-                    wft.setWorkflowName("301");
+                    wft.setWorkflowName("301"); // Stop Progress
                 }
                 else if (statusChange.getNewValue().equals("RESOLVED")) {
-                    wft.setWorkflowName("5");
+                    wft.setWorkflowName("5"); // Resolve Issue 
                     wft.setResolution(getResForStatusChange(e.getKey(), resolutions));
                 }
             }
             else if (statusChange.getOldValue().equals("RESOLVED")) {
                 if (statusChange.getNewValue().equals("REOPENED")) {
-                    wft.setWorkflowName("3");
+                    wft.setWorkflowName("3"); // Reopen
                     wft.setResolution(getResForStatusChange(e.getKey(), resolutions));
                 }
                 else if (statusChange.getNewValue().equals("CLOSED")) {
-                    wft.setWorkflowName("701");
+                    wft.setWorkflowName("701"); // Close Issue 
                 }
                 else if (statusChange.getNewValue().equals("VERIFIED")) {
-                    wft.setWorkflowName("741");
+                    wft.setWorkflowName("Verify Issue");
+                }
+                else if (statusChange.getNewValue().equals("NEW")) {
+                    wft.setWorkflowName("3"); // Reopen
+                    wft.setResolution(getResForStatusChange(e.getKey(), resolutions));
                 }
             }
             else if (statusChange.getOldValue().equals("REOPENED")) {
                 if (statusChange.getNewValue().equals("RESOLVED")) {
-                    wft.setWorkflowName("5");
+                    wft.setWorkflowName("5"); // Resolve Issue 
                     wft.setResolution(getResForStatusChange(e.getKey(), resolutions));
                 }
                 else if (statusChange.getNewValue().equals("NEW")) {
-                    wft.setWorkflowName("711");
+                    wft.setWorkflowName("Stop Progress");
                 }
                 else if (statusChange.getNewValue().equals("STARTED")) {
-                    wft.setWorkflowName("4");
+                    wft.setWorkflowName("4"); // Start Progress
                 }
             }
             else if (statusChange.getOldValue().equals("VERIFIED")) {
                 if (statusChange.getNewValue().equals("CLOSED")) {
-                    wft.setWorkflowName("721");
+                    wft.setWorkflowName("Close Issue");
                 }
                 else if (statusChange.getNewValue().equals("REOPENED")) {
-                    wft.setWorkflowName("731");
+                    wft.setWorkflowName("Reopen Issue");
                     wft.setResolution(getResForStatusChange(e.getKey(), resolutions));
                 }
             }
             else if (statusChange.getOldValue().equals("CLOSED")) {
                 if (statusChange.getNewValue().equals("REOPENED")) {
-                    wft.setWorkflowName("3");
+                    wft.setWorkflowName("3"); // Reopen
                     wft.setResolution(getResForStatusChange(e.getKey(), resolutions));
                 }
             }
 
+            if (wft.getWorkflowName() == null || wft.getWorkflowName().trim().isEmpty()) {
+            	throw new RuntimeException("No Workflow Transition name found for IssueZilla Activity " 
+            			+ statusChange.toString() + " of issue #" + originalIssue.getIssueId());
+            }
+            
             transitions.add(wft);
         }
 
@@ -411,11 +426,11 @@ public class JiraIssue {
         return users;
     }
     
-    private String getResForStatusChange(Date statusDate, Map resolutions) {
+    private String getResForStatusChange(Date statusDate, Map<Date, Activity> resolutions) {
         String res = "";
         
         if (resolutions.containsKey(statusDate)) {
-            Activity resAct = (Activity) resolutions.get(statusDate);
+            Activity resAct = resolutions.get(statusDate);
             String origRes = resAct.getNewValue();
             
             if (origRes.equals("FIXED")) {
