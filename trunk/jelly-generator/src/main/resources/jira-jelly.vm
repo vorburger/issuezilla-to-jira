@@ -27,11 +27,12 @@
 #set( $void = $params.validate() )
 ##
 #set( $xml = $utils.load("com.kenai.issuezilla2jira.translator.XmlUtil") )
+#set( $att = $utils.load("com.kenai.issuezilla2jira.translator.AttachmentsUtil") )
 #set( $j = $utils.load("com.kenai.issuezilla2jira.translator.JellyUtil") )
 ##
 #set( $void = $date.format("yyyy-MM-dd hh:mm:ss.0") )
 ##
-
+#set( $void = $att.setAttachmentsDir($attachmentsDir) )
 ##
 
 
@@ -113,6 +114,33 @@
     <issue src-key="$issue.key" src-id="$issue.issueId" dest-key="${d}{$j.keyRef($issue)}" dest-id="${d}{$j.idRef($issue)}" />
 #end
   </issues>
+
+
+  <!-- ============================================== -->
+  <!-- ATTACH FILES AND UPDATE FILEATTACHMENT RECORDS -->
+  <!-- ============================================== -->
+  <attachments>
+  
+#foreach( $issue in $issues )
+#foreach( $attachment in $issue.attachments )
+#set( $file = $att.getLocalFile($attachment))
+
+  <jira:AttachFile key="${d}{$j.keyRef($issue)}" filepath="$file.getAbsolutePath()" option="add"/>
+
+  <sql:query var="results" dataSource="${d}{db}">
+      select max(id) as maxId from fileattachment where issueid = ${d}{$j.idRef($issue)} and filename = '$attachment.filename'
+  </sql:query>
+
+  <j:set var="$j.idRef($attachment)" value="${d}{results.rows[0].maxId}" />
+  <sql:update var="results" dataSource="${d}{db}">
+      update fileattachment set author = '$attachment.submitterName', created = '$date.format($attachment.date)' where id = ${d}{$j.idRef($attachment)}
+  </sql:update>
+  
+  <attachment src-id="$attachment.attachId" dest-id="${d}{$j.idRef($attachment)}" src-user="$attachment.submitterName" dest-user="$attachment.submitterName" file="$attachment.filename" />
+    
+#end
+#end
+   </attachments>
 
 
   <!-- ======================================= -->
