@@ -210,7 +210,6 @@ public class Main {
         runTemplate(context, velocity, "jira-create-project.vm", outDir, "jira-newproject-jelly.xml");
         runTemplate(context, velocity, "jira-jelly.vm", outDir, "jira-issues-jelly.xml");
         runTemplate(context, velocity, "jira-remove-users-and-groups.vm", outDir, "jira-remove-users-and-groups-jelly.xml");
-        runTemplate(context, velocity, "jira-attachments.vm", outDir, "jira-attachments-jelly.xml");
     }
 
 	static File[] getXmlFiles(File originDir) throws Exception {
