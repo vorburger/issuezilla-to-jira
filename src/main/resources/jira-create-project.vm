@@ -2,7 +2,7 @@
 
 ##---------------------------------------------------------------------------
 ##
-## Copyright 2006-2009 David Blevins, Andrew Bayer, Michael Vorburger
+## Copyright 2006-2009 David Blevins, Andrew Bayer
 ##
 ##  Licensed under the Apache License, Version 2.0 (the "License");
 ##  you may not use this file except in compliance with the License.
@@ -41,12 +41,41 @@
 #set( $d = "$" )
 <j:set var="dollar" value="$" />
 
-#foreach( $user in $users )
-  <jira:RemoveUser name="$user" />
+###foreach( $user in $users )
+##  <jira:CreateUser username="$user"
+##                   password="$user"
+##                   confirm="$user"
+##                   fullname="$user"
+##                   email="andrew.bayer+jiraspam@gmail.com" />
+###end
+##
+##  <jira:CreateGroup group-name="${lowkey}-contributors"/>
+##  <jira:CreateGroup group-name="${lowkey}-developers">
+##    <jira:AddUserToGroup username="${jiraAdmin}"/>
+###foreach( $user in $users )
+##    <jira:AddUserToGroup username="$user"/>
+###end
+##  </jira:CreateGroup>
+
+  <jira:CreateProject key="$projectKey" name="$projectName" lead="$projectLead">
+    
+    <jira:CreatePermissionScheme name="$projectName permissions">
+      <jira:AddPermission type="reporter" permissions="Close"/>
+      <jira:AddPermission group="jira-administrators" permissions="ModifyReporter,Browse,Project,Close,Delete,ManageWatcherList,ViewVotersAndWatchers" type="group"/>
+      <jira:AddPermission group="jira-users" permissions="Browse,Create,Comment,Attach,ViewVersionControl,Project,Edit,Link,ScheduleIssue,Move,Assign,Assignable,Resolve,Close,Work" type="group"/>
+<!--      <jira:AddPermission group="jira-users" permissions="Browse,Create,Comment,Attach,ViewVersionControl" type="group"/>
+      <jira:AddPermission group="${lowkey}-developers" permissions="Browse,Project,Edit,Link,ScheduleIssue,Move,Assign,Assignable,Resolve,Close,Work" type="group"/>
+      <jira:AddPermission group="${lowkey}-contributors"
+      permissions="Assignable" type="group"/> -->
+      <jira:AddPermission group="Anyone" permissions="Browse,ViewVersionControl"/>
+      <jira:SelectProjectScheme/>
+    </jira:CreatePermissionScheme>
+#foreach( $component in $components )
+  <jira:AddComponent name="$component" />
 #end
-
-  <jira:RemoveGroup name="${lowkey}-contributors"/>
-
-  <jira:RemoveGroup name="${lowkey}-developers" />
+#foreach( $version in $versions )
+  <jira:AddVersion name="$version" />
+#end
+  </jira:CreateProject>
 
 </JiraJelly>

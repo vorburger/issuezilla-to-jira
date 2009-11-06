@@ -2,7 +2,7 @@
 
 ##---------------------------------------------------------------------------
 ##
-## Copyright 2006-2009 David Blevins, Andrew Bayer, Michael Vorburger
+## Copyright 2006-2009 David Blevins, Andrew Bayer
 ##
 ##  Licensed under the Apache License, Version 2.0 (the "License");
 ##  you may not use this file except in compliance with the License.
@@ -40,26 +40,24 @@
 <JiraJelly xmlns:jira="jelly:com.atlassian.jira.jelly.enterprise.JiraTagLib" xmlns:sql="jelly:sql" xmlns:j="jelly:core">
 #set( $d = "$" )
 <j:set var="dollar" value="$" />
+  <sql:setDataSource dataSource="jdbc/JiraDS" var="db" />
 
-  <jira:CreateProject key="$projectKey" name="$xml.escape($projectName)" lead="$xml.escape($projectLead)">
-    
-    <jira:CreatePermissionScheme name="$xml.escape($projectName) permissions">
-      <jira:AddPermission type="reporter" permissions="Close"/>
-      <jira:AddPermission group="jira-administrators" permissions="ModifyReporter,Browse,Project,Close,Delete" type="group"/>
-      <jira:AddPermission group="jira-users" permissions="Browse,Create,Comment,Attach,ViewVersionControl" type="group"/>
-      <jira:AddPermission group="${lowkey}-developers" permissions="Browse,Project,Edit,Link,ScheduleIssue,Move,Assign,Assignable,Resolve,Close,Work" type="group"/>
-      <jira:AddPermission group="${lowkey}-contributors" permissions="Assignable" type="group"/>
-      <jira:AddPermission group="Anyone" permissions="Browse,ViewVersionControl"/>
-      <jira:SelectProjectScheme/>
-    </jira:CreatePermissionScheme>
-
-#foreach( $component in $components )
-	  <jira:AddComponent name="$xml.escape($component)" />
+  <issues>
+#foreach( $issue in $issues )
+#if( $issue.watcherSize!=0 )
+  <sql:query var="results" dataSource="${d}{db}">
+      select id from jiraissue where pkey = '$issue.key'
+  </sql:query>
+  <j:set var="$j.idRef($issue)" value="${d}{results.rows[0].id}"/>
+#foreach( $watcher in $issue.watchers )
+    <issue dest-key="$issue.key" dest-id="${d}{$j.idRef($issue)}">
+      <command> 
+        wget &quot;http://issues.hudson-ci.org/secure/ManageWatchers!startWatchers.jspa?os_username=abayer&amp;os_password=abayer&amp;id=${d}{$j.idRef($issue)}&amp;userName=$watcher&quot; -O foo
+      </command>
+    </issue>
 #end
-
-#foreach( $version in $versions )
-	  <jira:AddVersion name="$xml.escape($version)" />
 #end
-  </jira:CreateProject>
+#end
+  </issues>
 
 </JiraJelly>

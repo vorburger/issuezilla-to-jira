@@ -20,8 +20,11 @@ package com.kenai.issuezilla2jira.parser;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import org.apache.commons.digester.Digester;
+import org.apache.commons.lang.StringUtils;
 import org.xml.sax.SAXException;
 
 /**

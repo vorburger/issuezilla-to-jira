@@ -1,6 +1,6 @@
 /**
  *
- * Copyright 2006-2009 David Blevins, Andrew Bayer, Michael Vorburger
+ * Copyright 2006-2009 David Blevins, Andrew Bayer
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,22 +14,22 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.kenai.issuezilla2jira.translator;
+package com.kenai.issuezilla2jira.translator;;
+
+import com.kenai.issuezilla2jira.parser.Attachment;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.URL;
-
-import com.kenai.issuezilla2jira.parser.Attachment;
 
 /**
- * Attachment Utils.
+ * @version $Revision$ $Date$
  */
 public class AttachmentsUtil {
 
@@ -43,10 +43,16 @@ public class AttachmentsUtil {
 
     private File attachmentsDir;
 
-    private File saveAttachment(File dir, Attachment attachment) throws IOException {
-        File file = getLocalFile(dir, attachment);
-
-        if (!attachment.getData().equals("")) {
+    public File saveAttachment(File dir, Attachment attachment) throws IOException {
+        File idDir = new File(dir, attachment.getAttachId() + "");
+        idDir.mkdir();
+        File file = new File(idDir, attachment.getFilename());
+                
+        if ((System.getProperty("skipDownload")!=null)
+            && (System.getProperty("skipDownload").equals("true"))) {
+            return file;
+        }
+        else if (!attachment.getData().equals("")) {
             Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
             
             try {
@@ -75,33 +81,15 @@ public class AttachmentsUtil {
         
         return file;
     }
-    
+
     public File saveAttachment(Attachment attachment) throws IOException {
         return saveAttachment(getOrCreateAttachmentsDir("attachments"), attachment);
     }
 
-    
-	public File getLocalFile(File dir, Attachment attachment) {
-		File idDir = new File(dir, attachment.getAttachId() + "");
-        idDir.mkdir();
-        File file = new File(idDir, attachment.getFilename());
-		return file;
-	}
-	
-	public File getLocalFile(Attachment attachment) throws IOException {
-		File file = getLocalFile(getOrCreateAttachmentsDir("attachments"), attachment);
-		if (!file.exists()) 
-			throw new IOException(file + " does not exist, run DownloadAttachments first..");
-		return file;
-	}
-
     private File getOrCreateAttachmentsDir(String prefix) throws IOException {
         if (attachmentsDir != null) {
             return attachmentsDir;
-        } else {
-        	throw new IOException("attachmentsDir has not been set");
         }
-/*        
         if (System.getProperty("attachDir") != null) {
             return new File(System.getProperty("attachDir"));
         }
@@ -120,7 +108,6 @@ public class AttachmentsUtil {
 
         attachmentsDir = dir;
         return attachmentsDir;
-*/        
     }
 
 }
