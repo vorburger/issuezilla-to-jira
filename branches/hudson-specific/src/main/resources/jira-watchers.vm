@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+##---------------------------------------------------------------------------
+##
+## Copyright 2006-2009 David Blevins, Andrew Bayer
+##
+##  Licensed under the Apache License, Version 2.0 (the "License");
+##  you may not use this file except in compliance with the License.
+##  You may obtain a copy of the License at
+##
+##     http://www.apache.org/licenses/LICENSE-2.0
+##
+##  Unless required by applicable law or agreed to in writing, software
+##  distributed under the License is distributed on an "AS IS" BASIS,
+##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+##  See the License for the specific language governing permissions and
+##  limitations under the License.
+##
+##---------------------------------------------------------------------------
+#############################################################################
+
+#set( $void = $params.required( "projectKey" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "projectName" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "projectLead" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "lowkey" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "jiraAdmin" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.validate() )
+##
+#set( $xml = $utils.load("com.kenai.issuezilla2jira.translator.XmlUtil") )
+#set( $att = $utils.load("com.kenai.issuezilla2jira.translator.AttachmentsUtil") )
+#set( $j = $utils.load("com.kenai.issuezilla2jira.translator.JellyUtil") )
+##
+#set( $void = $date.format("yyyy-MM-dd hh:mm:ss.0") )
+##
+
+##
+#set( $void = $att.getOrCreateAttachmentsDir("${lowkey}-attachments") )
+
+
+<JiraJelly xmlns:jira="jelly:com.atlassian.jira.jelly.enterprise.JiraTagLib" xmlns:sql="jelly:sql" xmlns:j="jelly:core">
+#set( $d = "$" )
+<j:set var="dollar" value="$" />
+  <sql:setDataSource dataSource="jdbc/JiraDS" var="db" />
+
+  <issues>
+#foreach( $issue in $issues )
+#if( $issue.watcherSize!=0 )
+  <sql:query var="results" dataSource="${d}{db}">
+      select id from jiraissue where pkey = '$issue.key'
+  </sql:query>
+  <j:set var="$j.idRef($issue)" value="${d}{results.rows[0].id}"/>
+#foreach( $watcher in $issue.watchers )
+    <issue dest-key="$issue.key" dest-id="${d}{$j.idRef($issue)}">
+      <command> 
+        wget &quot;http://issues.hudson-ci.org/secure/ManageWatchers!startWatchers.jspa?os_username=abayer&amp;os_password=abayer&amp;id=${d}{$j.idRef($issue)}&amp;userName=$watcher&quot; -O foo
+      </command>
+    </issue>
+#end
+#end
+#end
+  </issues>
+
+</JiraJelly>

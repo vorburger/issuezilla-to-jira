@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+##---------------------------------------------------------------------------
+##
+## Copyright 2006-2009 David Blevins, Andrew Bayer
+##
+##  Licensed under the Apache License, Version 2.0 (the "License");
+##  you may not use this file except in compliance with the License.
+##  You may obtain a copy of the License at
+##
+##     http://www.apache.org/licenses/LICENSE-2.0
+##
+##  Unless required by applicable law or agreed to in writing, software
+##  distributed under the License is distributed on an "AS IS" BASIS,
+##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+##  See the License for the specific language governing permissions and
+##  limitations under the License.
+##
+##---------------------------------------------------------------------------
+#############################################################################
+
+#set( $void = $params.required( "projectKey" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "projectName" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "projectLead" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "lowkey" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "jiraAdmin" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.validate() )
+##
+#set( $xml = $utils.load("com.kenai.issuezilla2jira.translator.XmlUtil") )
+#set( $att = $utils.load("com.kenai.issuezilla2jira.translator.AttachmentsUtil") )
+#set( $j = $utils.load("com.kenai.issuezilla2jira.translator.JellyUtil") )
+##
+#set( $void = $date.format("yyyy-MM-dd hh:mm:ss.0") )
+##
+
+##
+#set( $void = $att.getOrCreateAttachmentsDir("${lowkey}-attachments") )
+
+
+<JiraJelly xmlns:jira="jelly:com.atlassian.jira.jelly.enterprise.JiraTagLib" xmlns:sql="jelly:sql" xmlns:j="jelly:core">
+#set( $d = "$" )
+<j:set var="dollar" value="$" />
+##<!--
+###foreach( $user in $users )
+##jira.sh --action login --user $user --password $user --server http://issues.hudson-ci.org
+##wget "http://issues.hudson-ci.org/login.jsp?os_username=$user&os_password=$user" -O foo
+###end                                
+##-->
+##  <jira:CreateUser username="$user"
+##                   password="$user"
+##                   confirm="$user"
+##                   fullname="$user"
+##                   email="andrew.bayer+jiraspam@gmail.com" />
+###end
+##
+##  <jira:CreateGroup group-name="${lowkey}-contributors"/>
+##  <jira:CreateGroup group-name="${lowkey}-developers">
+##    <jira:AddUserToGroup username="${jiraAdmin}"/>
+###foreach( $user in $users )
+##    <jira:AddUserToGroup username="$user"/>
+###end
+##  </jira:CreateGroup>
+
+##  <jira:CreateProject key="$projectKey" name="$projectName" lead="$projectLead">
+##    
+##    <jira:CreatePermissionScheme name="$projectName permissions">
+##      <jira:AddPermission type="reporter" permissions="Close"/>
+##      <jira:AddPermission group="jira-administrators" permissions="ModifyReporter,Browse,Project,Close,Delete" type="group"/>
+##      <jira:AddPermission group="jira-users" permissions="Browse,Create,Comment,Attach,ViewVersionControl" type="group"/>
+##      <jira:AddPermission group="${lowkey}-developers" permissions="Browse,Project,Edit,Link,ScheduleIssue,Move,Assign,Assignable,Resolve,Close,Work" type="group"/>
+##      <jira:AddPermission group="${lowkey}-contributors" permissions="Assignable" type="group"/>
+##      <jira:AddPermission group="Anyone" permissions="Browse,ViewVersionControl"/>
+##      <jira:SelectProjectScheme/>
+##    </jira:CreatePermissionScheme>
+###foreach( $component in $components )
+##  <jira:AddComponent name="$component" />
+###end
+###foreach( $version in $versions )
+##  <jira:AddVersion name="$version" />
+###end
+##  </jira:CreateProject>
+
+#foreach( $issue in $issues )
+  <jira:CreateIssue project-key="$projectKey"
+    issueType="$xml.escape($issue.issueType)"
+    summary="$xml.escape($issue.summary)"
+    priority="$xml.escape($issue.priority)"
+    components="$xml.escape($issue.components)"
+    versions="$xml.escape($issue.version)"
+    assignee="$xml.escape($issue.assignedTo)"
+    reporter="$xml.escape($issue.reporter)"
+    environment="$xml.escape($issue.environment)"
+                    
+    description="$xml.escape($issue.description)"
+    created="$date.format($issue.createdTime)"
+    updated="$date.format($issue.updatedTime)"
+    duplicateSummary="ignore"
+    issueKeyVar="$j.keyRef($issue)">
+#if( $issue.issueRefUrl != "" )
+    <jira:AddCustomFieldValue id="customfield_10000"
+                              value="$xml.escape($issue.issueRefUrl)" />
+#end
+#foreach( $watcher in $issue.watchers )
+    <jira:AddCustomFieldValue id="customfield_10010"
+                              value="$xml.escape($watcher)" />
+#end
+</jira:CreateIssue>
+
+#end
+
+#foreach( $issue in $issues )
+#foreach( $transition in $issue.workflowTransitions )
+#if( $transition.resolution != "" )                                
+  <jira:TransitionWorkflow key="${d}{$j.keyRef($issue)}"
+                           workflowAction="$transition.workflowName"
+                           resolution="$transition.resolution"
+                           user="$transition.user" />
+#else
+  <jira:TransitionWorkflow key="${d}{$j.keyRef($issue)}"
+                           workflowAction="$transition.workflowName"
+                           user="$transition.user" />
+#end
+#end
+#end
+
+#foreach( $issue in $issues )
+#foreach( $comment in $issue.comments )
+  <jira:AddComment issue-key="${d}{$j.keyRef($issue)}"
+    commenter="$xml.escape($comment.commenter)"
+    created="$date.format($comment.commentTime)"
+    comment="$xml.escape($comment.commentText)"
+    />
+
+#end
+#end
+
+
+  <!-- =================================== -->
+  <!-- SELECT ISSUE IDS AS JELLY VARIABLES -->
+  <!-- =================================== -->
+
+  <sql:setDataSource dataSource="jdbc/JiraDS" var="db" />
+
+  <issues>
+#foreach( $issue in $issues )
+  <sql:query var="results" dataSource="${d}{db}">
+      select id from jiraissue where pkey = '${d}{$j.keyRef($issue)}'
+  </sql:query>
+  <j:set var="$j.idRef($issue)" value="${d}{results.rows[0].id}"/>
+    <issue src-key="$issue.key" src-id="$issue.issueId" dest-key="${d}{$j.keyRef($issue)}" dest-id="${d}{$j.idRef($issue)}" />
+#end
+  </issues>
+
+
+  <!-- ============================================== -->
+  <!-- ATTACH FILES AND UPDATE FILEATTACHMENT RECORDS -->
+  <!-- ============================================== -->
+  <attachments>
+#foreach( $issue in $issues )
+#foreach( $attachment in $issue.attachments )
+#set( $file = $att.saveAttachment($attachment))
+  <jira:AttachFile key="${d}{$j.keyRef($issue)}" filepath="$file.getAbsolutePath()" option="add"/>
+  <sql:query var="results" dataSource="${d}{db}">
+      select max(id) as maxId from fileattachment where issueid = ${d}{$j.idRef($issue)} and filename = '$attachment.filename'
+  </sql:query>
+  <j:set var="$j.idRef($attachment)" value="${d}{results.rows[0].maxId}" />
+  <sql:update var="results" dataSource="${d}{db}">
+      update fileattachment set author = '$attachment.submitterName', created = '$date.format($attachment.date)' where id = ${d}{$j.idRef($attachment)}
+  </sql:update>
+    <attachment src-id="$attachment.attachId" dest-id="${d}{$j.idRef($attachment)}" src-user="$attachment.submitterName" dest-user="$attachment.submitterName" file="$attachment.filename" />
+
+#end
+#end
+  </attachments>
+
+  <!-- ======================================= -->
+  <!-- Issue linking - duplicates and blocking -->
+  <!-- ======================================= -->
+#foreach( $issue in $issues )
+#foreach( $duplicate in $issue.duplicatesOf )
+  <jira:LinkIssue key="${d}{$j.keyRef($duplicate.fromId)}"
+                  linkKey="${d}{$j.keyRef($duplicate.toId)}"
+                  linkDesc="$duplicate.linkDesc" />
+#end
+#end
+#foreach( $issue in $issues )
+#foreach( $depends in $issue.dependsOn )
+  <jira:LinkIssue key="${d}{$j.keyRef($depends.fromId)}"
+                  linkKey="${d}{$j.keyRef($depends.toId)}"
+                  linkDesc="$depends.linkDesc" />
+#end
+#end
+  
+
+#foreach( $issue in $issues )
+  <sql:update var="results" dataSource="${d}{db}">
+      update jiraissue set updated = '$date.format($issue.updatedTime)' where pkey = '${d}{$j.keyRef($issue)}'
+  </sql:update>
+#end
+
+  <!-- ============================ -->
+  <!-- SQL HACK FOR ISSUE KEY NAMES -->
+  <!-- ============================ -->
+
+#foreach( $issue in $issues )
+  <sql:update var="results" dataSource="${d}{db}">
+      update jiraissue set pkey = '$issue.key' where id = '${d}{$j.idRef($issue)}' and pkey = '${d}{$j.keyRef($issue)}'
+  </sql:update>
+#end
+
+</JiraJelly>

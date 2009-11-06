@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+##---------------------------------------------------------------------------
+##
+## Copyright 2006-2009 David Blevins, Andrew Bayer
+##
+##  Licensed under the Apache License, Version 2.0 (the "License");
+##  you may not use this file except in compliance with the License.
+##  You may obtain a copy of the License at
+##
+##     http://www.apache.org/licenses/LICENSE-2.0
+##
+##  Unless required by applicable law or agreed to in writing, software
+##  distributed under the License is distributed on an "AS IS" BASIS,
+##  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+##  See the License for the specific language governing permissions and
+##  limitations under the License.
+##
+##---------------------------------------------------------------------------
+#############################################################################
+
+#set( $void = $params.required( "projectKey" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "projectName" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "projectLead" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "lowkey" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.required( "jiraAdmin" , "[a-zA-Z0-9]+", "the JIRA key for the project" ) )
+#set( $void = $params.validate() )
+##
+#set( $xml = $utils.load("com.kenai.issuezilla2jira.translator.XmlUtil") )
+#set( $att = $utils.load("com.kenai.issuezilla2jira.translator.AttachmentsUtil") )
+#set( $j = $utils.load("com.kenai.issuezilla2jira.translator.JellyUtil") )
+##
+#set( $void = $date.format("yyyy-MM-dd hh:mm:ss.0") )
+##
+
+##
+#set( $void = $att.getOrCreateAttachmentsDir("${lowkey}-attachments") )
+
+
+<JiraJelly xmlns:jira="jelly:com.atlassian.jira.jelly.enterprise.JiraTagLib" xmlns:sql="jelly:sql" xmlns:j="jelly:core">
+#set( $d = "$" )
+<j:set var="dollar" value="$" />
+
+###foreach( $user in $users )
+##  <jira:CreateUser username="$user"
+##                   password="$user"
+##                   confirm="$user"
+##                   fullname="$user"
+##                   email="andrew.bayer+jiraspam@gmail.com" />
+###end
+##
+##  <jira:CreateGroup group-name="${lowkey}-contributors"/>
+##  <jira:CreateGroup group-name="${lowkey}-developers">
+##    <jira:AddUserToGroup username="${jiraAdmin}"/>
+###foreach( $user in $users )
+##    <jira:AddUserToGroup username="$user"/>
+###end
+##  </jira:CreateGroup>
+
+  <jira:CreateProject key="$projectKey" name="$projectName" lead="$projectLead">
+    
+    <jira:CreatePermissionScheme name="$projectName permissions">
+      <jira:AddPermission type="reporter" permissions="Close"/>
+      <jira:AddPermission group="jira-administrators" permissions="ModifyReporter,Browse,Project,Close,Delete,ManageWatcherList,ViewVotersAndWatchers" type="group"/>
+      <jira:AddPermission group="jira-users" permissions="Browse,Create,Comment,Attach,ViewVersionControl,Project,Edit,Link,ScheduleIssue,Move,Assign,Assignable,Resolve,Close,Work" type="group"/>
+<!--      <jira:AddPermission group="jira-users" permissions="Browse,Create,Comment,Attach,ViewVersionControl" type="group"/>
+      <jira:AddPermission group="${lowkey}-developers" permissions="Browse,Project,Edit,Link,ScheduleIssue,Move,Assign,Assignable,Resolve,Close,Work" type="group"/>
+      <jira:AddPermission group="${lowkey}-contributors"
+      permissions="Assignable" type="group"/> -->
+      <jira:AddPermission group="Anyone" permissions="Browse,ViewVersionControl"/>
+      <jira:SelectProjectScheme/>
+    </jira:CreatePermissionScheme>
+#foreach( $component in $components )
+  <jira:AddComponent name="$component" />
+#end
+#foreach( $version in $versions )
+  <jira:AddVersion name="$version" />
+#end
+  </jira:CreateProject>
+
+</JiraJelly>
